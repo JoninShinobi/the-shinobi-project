@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shinobi Project Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 300;
+        }
+        
+        .entity-selector {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .entity-selector select {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .stat-card p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .chart-canvas {
+            max-height: 400px;
+        }
+        
+        .network-chart {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .entity-info {
+            margin-bottom: 1.5rem;
+        }
+        
+        .entity-info h2 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .entity-meta {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .entity-meta h4 {
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metadata-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+        
+        .relationship-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .relationship-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .recent-activity {
+            margin-top: 1.5rem;
+        }
+        
+        .activity-item {
+            padding: 0.75rem;
+            border-left: 4px solid #667eea;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .activity-item h4 {
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .activity-item p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .ai-insights {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        
+        .ai-insights h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .ai-button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🥷 The Shinobi Project Dashboard</h1>
+        <div class="entity-selector">
+            <select id="entitySelector" onchange="updateDashboard()">
+                <option value="">All Entities (Overview)</option>
+                <optgroup label="Organizations">
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}" {% if org.id == selected_entity_id %}selected{% endif %}>
+                        {{ org.name }}
+                    </option>
+                    {% endfor %}
+                </optgroup>
+                <optgroup label="Individuals">
+                    {% for person in individuals %}
+                    <option value="{{ person.id }}" {% if person.id == selected_entity_id %}selected{% endif %}>
+                        {{ person.name }}
+                    </option>
+                    {% endfor %}
+                </optgroup>
+            </select>
+            <button class="ai-button" onclick="getAIInsights()">🤖 AI Insights</button>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="sidebar">
+            {% if selected_entity_id %}
+                <!-- Entity-specific sidebar -->
+                <div class="entity-info">
+                    <h2>{{ entity.name }}</h2>
+                    <p><strong>Type:</strong> {{ entity_type_display }}</p>
+                    
+                    {% if entity.metadata %}
+                    <div class="entity-meta">
+                        <h4>Metadata</h4>
+                        {% for key, value in entity.metadata.items %}
+                        <div class="metadata-item">
+                            <span>{{ key }}:</span>
+                            <span>{{ value }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="entity-meta">
+                        <h4>Relationships ({{ relationships.total }})</h4>
+                        <div class="relationship-list">
+                            {% for rel in relationships.outgoing %}
+                            <div class="relationship-item">
+                                <span>{{ rel.relationship_type }} {{ rel.entity_b.name }}</span>
+                                <span>{{ rel.strength }}/10</span>
+                            </div>
+                            {% endfor %}
+                            {% for rel in relationships.incoming %}
+                            <div class="relationship-item">
+                                <span>{{ rel.entity_a.name }} {{ rel.relationship_type }} this</span>
+                                <span>{{ rel.strength }}/10</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Overview sidebar -->
+                <div class="entity-info">
+                    <h2>System Overview</h2>
+                    <p>Complete business network view</p>
+                </div>
+                
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    {% for entry in recent_time_entries %}
+                    <div class="activity-item">
+                        <h4>{{ entry.person.name }}</h4>
+                        <p>{{ entry.description|truncatewords:10 }}</p>
+                        <small>{{ entry.created_at|date:"M d, H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="main-content">
+            <div id="aiInsights" class="ai-insights" style="display: none;">
+                <h3>🤖 AI Business Intelligence</h3>
+                <div id="aiContent"></div>
+            </div>
+
+            {% if selected_entity_id %}
+                <!-- Entity-specific dashboard -->
+                <div class="stats-grid">
+                    {% if entity.entity_type == 'organization' %}
+                        <div class="stat-card">
+                            <h3>{{ primary_projects|length }}</h3>
+                            <p>Primary Projects</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>{{ time_entries|length }}</h3>
+                            <p>Time Entries</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>{{ assigned_tasks|length }}</h3>
+                            <p>Assigned Tasks</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>{{ total_time_hours.total_seconds|floatformat:0 }}h</h3>
+                            <p>Total Time</p>
+                        </div>
+                    {% elif entity.entity_type == 'individual' %}
+                        <div class="stat-card">
+                            <h3>{{ time_entries|length }}</h3>
+                            <p>Time Entries</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>{{ assigned_tasks|length }}</h3>
+                            <p>Assigned Tasks</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>{{ total_time_hours.total_seconds|floatformat:0 }}h</h3>
+                            <p>Total Time</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>{{ task_completion_rate }}%</h3>
+                            <p>Task Completion</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('overview')">Overview</div>
+                    <div class="tab" onclick="switchTab('time')">Time Tracking</div>
+                    <div class="tab" onclick="switchTab('projects')">Projects</div>
+                    <div class="tab" onclick="switchTab('tasks')">Tasks</div>
+                </div>
+
+                <div id="overviewTab" class="tab-content active">
+                    {% if entity.entity_type == 'organization' %}
+                        <div class="chart-container">
+                            <div class="chart-title">Time Distribution</div>
+                            <canvas id="timeDistributionChart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Project Timeline</div>
+                            <canvas id="projectTimelineChart" class="chart-canvas"></canvas>
+                        </div>
+                    {% elif entity.entity_type == 'individual' %}
+                        <div class="chart-container">
+                            <div class="chart-title">Time by Organization</div>
+                            <canvas id="timeByOrgChart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Productivity Trends</div>
+                            <canvas id="productivityChart" class="chart-canvas"></canvas>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div id="timeTab" class="tab-content">
+                    <div class="chart-container">
+                        <div class="chart-title">Recent Time Entries</div>
+                        <div>
+                            {% for entry in time_entries %}
+                            <div class="activity-item">
+                                <h4>{{ entry.organization.name|default:"General" }}</h4>
+                                <p>{{ entry.description }}</p>
+                                <small>{{ entry.start_time|date:"M d, H:i" }} - {{ entry.duration }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="projectsTab" class="tab-content">
+                    <div class="chart-container">
+                        <div class="chart-title">Projects</div>
+                        <div>
+                            {% for project in primary_projects %}
+                            <div class="activity-item">
+                                <h4>{{ project.name }}</h4>
+                                <p>{{ project.description }}</p>
+                                <small>Status: {{ project.status }} | Start: {{ project.start_date|default:"TBD" }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tasksTab" class="tab-content">
+                    <div class="chart-container">
+                        <div class="chart-title">Assigned Tasks</div>
+                        <div>
+                            {% for task in assigned_tasks %}
+                            <div class="activity-item">
+                                <h4>{{ task.title }}</h4>
+                                <p>{{ task.description }}</p>
+                                <small>Priority: {{ task.priority }} | Status: {{ task.status }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- Overview dashboard -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>{{ total_entities }}</h3>
+                        <p>Total Entities</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>{{ total_projects }}</h3>
+                        <p>Total Projects</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>{{ active_projects }}</h3>
+                        <p>Active Projects</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>{{ total_relationships }}</h3>
+                        <p>Relationships</p>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Entity Distribution</div>
+                    <canvas id="entityDistributionChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Time Tracking Trends (30 days)</div>
+                    <canvas id="timeTrackingChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Relationship Network</div>
+                    <svg id="networkChart" class="network-chart"></svg>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let charts = {};
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+        
+        function updateDashboard() {
+            const entityId = document.getElementById('entitySelector').value;
+            const url = entityId ? 
+                `?entity_id=${entityId}` : 
+                window.location.pathname;
+            window.location.href = url;
+        }
+        
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function initializeCharts() {
+            {% if selected_entity_id %}
+                // Entity-specific charts
+                {% if entity.entity_type == 'organization' %}
+                    createTimeDistributionChart();
+                    createProjectTimelineChart();
+                {% elif entity.entity_type == 'individual' %}
+                    createTimeByOrgChart();
+                    createProductivityChart();
+                {% endif %}
+            {% else %}
+                // Overview charts
+                createEntityDistributionChart();
+                createTimeTrackingChart();
+                createNetworkChart();
+            {% endif %}
+        }
+        
+        function createEntityDistributionChart() {
+            const ctx = document.getElementById('entityDistributionChart').getContext('2d');
+            const data = {{ entity_distribution|safe }};
+            
+            charts.entityDistribution = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(item => item.entity_type),
+                    datasets: [{
+                        data: data.map(item => item.count),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c',
+                            '#4facfe'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createTimeTrackingChart() {
+            const ctx = document.getElementById('timeTrackingChart').getContext('2d');
+            const data = {{ time_tracking_trends|safe }};
+            
+            charts.timeTracking = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(item => item.date),
+                    datasets: [{
+                        label: 'Hours Tracked',
+                        data: data.map(item => item.hours),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createNetworkChart() {
+            const data = {{ relationship_network|safe }};
+            const svg = d3.select('#networkChart');
+            const width = 800;
+            const height = 400;
+            
+            svg.attr('width', width).attr('height', height);
+            
+            const simulation = d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.edges).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+            
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(data.edges)
+                .enter().append('line')
+                .attr('stroke', '#999')
+                .attr('stroke-opacity', 0.6)
+                .attr('stroke-width', d => Math.sqrt(d.strength));
+            
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(data.nodes)
+                .enter().append('circle')
+                .attr('r', 8)
+                .attr('fill', d => d.type === 'organization' ? '#667eea' : '#f5576c')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(data.nodes)
+                .enter().append('text')
+                .text(d => d.name)
+                .attr('font-size', 10)
+                .attr('dx', 12)
+                .attr('dy', 4);
+            
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+            
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+        
+        {% if entity.entity_type == 'organization' %}
+        function createTimeDistributionChart() {
+            const ctx = document.getElementById('timeDistributionChart').getContext('2d');
+            const data = {{ time_distribution|safe }};
+            
+            charts.timeDistribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.person__name),
+                    datasets: [{
+                        label: 'Hours',
+                        data: data.map(item => item.total_hours),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y'
+                }
+            });
+        }
+        
+        function createProjectTimelineChart() {
+            // Project timeline chart implementation
+            const ctx = document.getElementById('projectTimelineChart').getContext('2d');
+            const data = {{ project_timeline|safe }};
+            
+            charts.projectTimeline = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        label: 'Progress %',
+                        data: data.map(item => item.progress),
+                        backgroundColor: '#764ba2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+        
+        {% if entity.entity_type == 'individual' %}
+        function createTimeByOrgChart() {
+            const ctx = document.getElementById('timeByOrgChart').getContext('2d');
+            const data = {{ time_by_organization|safe }};
+            
+            charts.timeByOrg = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(item => item.organization__name),
+                    datasets: [{
+                        data: data.map(item => item.total_hours),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c',
+                            '#4facfe'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        function createProductivityChart() {
+            const ctx = document.getElementById('productivityChart').getContext('2d');
+            const data = {{ productivity_trends|safe }};
+            
+            charts.productivity = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(item => item.date),
+                    datasets: [{
+                        label: 'Hours per Day',
+                        data: data.map(item => item.hours),
+                        borderColor: '#f5576c',
+                        backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+        
+        function getAIInsights() {
+            const entityId = document.getElementById('entitySelector').value;
+            const insightsDiv = document.getElementById('aiInsights');
+            const contentDiv = document.getElementById('aiContent');
+            
+            insightsDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="loading">🤖 Generating AI insights...</div>';
+            
+            const url = entityId ? 
+                `/dashboard/ai-insights/${entityId}/` : 
+                '/dashboard/ai-insights/overview/';
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayAIInsights(data.insights);
+                    } else {
+                        contentDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                    }
+                })
+                .catch(error => {
+                    contentDiv.innerHTML = `<p>Error loading insights: ${error}</p>`;
+                });
+        }
+        
+        function displayAIInsights(insights) {
+            const contentDiv = document.getElementById('aiContent');
+            let html = '';
+            
+            if (insights.analysis) {
+                const analysis = insights.analysis;
+                
+                if (analysis.key_performance_insights) {
+                    html += '<h4>📊 Key Performance Insights</h4>';
+                    for (const [key, value] of Object.entries(analysis.key_performance_insights)) {
+                        html += `<p><strong>${key}:</strong> ${value}</p>`;
+                    }
+                }
+                
+                if (analysis.recommendations) {
+                    html += '<h4>💡 Recommendations</h4>';
+                    for (const [key, value] of Object.entries(analysis.recommendations)) {
+                        html += `<p><strong>${key}:</strong> ${Array.isArray(value) ? value.join(', ') : value}</p>`;
+                    }
+                }
+                
+                if (analysis.growth_opportunities) {
+                    html += '<h4>🚀 Growth Opportunities</h4>';
+                    for (const [key, value] of Object.entries(analysis.growth_opportunities)) {
+                        html += `<p><strong>${key}:</strong> ${Array.isArray(value) ? value.join(', ') : value}</p>`;
+                    }
+                }
+            } else {
+                html = `<p>${insights.analysis || 'No insights available'}</p>`;
+            }
+            
+            contentDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
