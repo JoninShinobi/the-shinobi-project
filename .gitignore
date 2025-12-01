@@ -23,6 +23,9 @@ media/
 .env.local
 .env.*.local
 
+# MCP Config (contains tokens)
+.mcp.json
+
 # Node/Frontend
 node_modules/
 .next/

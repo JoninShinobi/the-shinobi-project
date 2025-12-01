@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "directus": {
+      "type": "http",
+      "url": "http://localhost:8055/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_DIRECTUS_TOKEN_HERE"
+      }
+    },
+    "cloudflare-workers": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://bindings.mcp.cloudflare.com/mcp"]
+    },
+    "cloudflare-audit": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://audit-logs.mcp.cloudflare.com/mcp"]
+    }
+  }
+}

@@ -46,3 +46,55 @@ class ContactSubmission(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.email}"
+
+
+class IncomingIntel(models.Model):
+    """Tracks incoming leads and inquiries - The C2 Intelligence Feed"""
+    INTEL_TYPE_CHOICES = [
+        ('lead', 'Lead'),
+        ('inquiry', 'Inquiry'),
+        ('referral', 'Referral'),
+    ]
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('contacted', 'Contacted'),
+        ('qualified', 'Qualified'),
+        ('converted', 'Converted'),
+        ('archived', 'Archived'),
+    ]
+
+    source = models.CharField(max_length=100)  # website, referral, cold
+    contact_name = models.CharField(max_length=200)
+    contact_email = models.EmailField()
+    business_name = models.CharField(max_length=200, blank=True)
+    intel_type = models.CharField(max_length=50, choices=INTEL_TYPE_CHOICES)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='new')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "Incoming Intel"
+
+    def __str__(self):
+        return f"[{self.status}] {self.contact_name} - {self.intel_type}"
+
+
+class BusinessMetrics(models.Model):
+    """Tracks key business metrics over time - The C2 Dashboard Data"""
+    date = models.DateField(unique=True)
+    website_visits = models.IntegerField(default=0)
+    leads_generated = models.IntegerField(default=0)
+    proposals_sent = models.IntegerField(default=0)
+    deals_closed = models.IntegerField(default=0)
+    revenue = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name_plural = "Business Metrics"
+
+    def __str__(self):
+        return f"{self.date} - {self.leads_generated} leads, ${self.revenue}"

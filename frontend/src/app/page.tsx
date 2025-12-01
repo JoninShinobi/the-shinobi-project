@@ -262,23 +262,6 @@ export default function ShinobiProject() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 px-6 bg-zinc-950 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-          <Logo className="w-auto h-auto" width={800} height={160} />
-        </div>
-        <div className="container mx-auto relative z-10 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-8">Ready to Strike Back?</h2>
-          <p className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
-            The era of confusing business language ends today. Let us build your armory so you can focus on the fight.
-          </p>
-          <div className="flex flex-col items-center gap-6">
-             <Button primary className="min-w-[250px] text-lg">Schedule Briefing</Button>
-             <p className="text-sm text-zinc-600 uppercase tracking-widest">Confidentiality Guaranteed</p>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-black py-12 px-6 border-t border-zinc-900">
         <div className="container mx-auto">
