@@ -62,8 +62,63 @@ services:
       - media_volume:/app/media
     command: python manage.py runserver 0.0.0.0:8000
 
+  # Postiz - Social Media Scheduler
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:latest
+    container_name: postiz
+    ports:
+      - "5000:5000"
+    depends_on:
+      postiz-postgres:
+        condition: service_healthy
+      postiz-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTIZ_DB_USER:-postiz}:${POSTIZ_DB_PASSWORD:-postiz}@postiz-postgres:5432/${POSTIZ_DB_NAME:-postiz}
+      REDIS_URL: redis://postiz-redis:6379
+      JWT_SECRET: ${POSTIZ_JWT_SECRET}
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:5000
+      BACKEND_INTERNAL_URL: http://localhost:5000
+      FRONTEND_URL: http://localhost:5000
+      NEXT_PUBLIC_FRONTEND_URL: http://localhost:5000
+      IS_GENERAL: "true"
+      STORAGE_PROVIDER: local
+      UPLOAD_DIRECTORY: /uploads
+      NEXT_PUBLIC_UPLOAD_DIRECTORY: /uploads
+    volumes:
+      - postiz_uploads:/uploads
+
+  postiz-postgres:
+    image: postgres:16-alpine
+    container_name: postiz_postgres
+    environment:
+      POSTGRES_USER: ${POSTIZ_DB_USER:-postiz}
+      POSTGRES_PASSWORD: ${POSTIZ_DB_PASSWORD:-postiz}
+      POSTGRES_DB: ${POSTIZ_DB_NAME:-postiz}
+    volumes:
+      - postiz_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postiz -d postiz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postiz-redis:
+    image: redis:7-alpine
+    container_name: postiz_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postiz_redis_data:/data
+
 volumes:
   pg_data:
   directus_uploads:
   static_volume:
   media_volume:
+  postiz_uploads:
+  postiz_pg_data:
+  postiz_redis_data:
