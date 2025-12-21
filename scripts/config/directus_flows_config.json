@@ -1,0 +1,818 @@
+{
+  "flows": [
+    {
+      "name": "Welcome Email - New Lead",
+      "icon": "mail",
+      "color": "#b91c1c",
+      "description": "Sends welcome email when a new lead is created",
+      "status": "active",
+      "trigger": "event",
+      "accountability": "all",
+      "options": {
+        "type": "action",
+        "scope": ["items.create"],
+        "collections": ["leads"]
+      },
+      "operations": [
+        {
+          "name": "Get Contact Details",
+          "key": "get_contact",
+          "type": "item-read",
+          "position_x": 19,
+          "position_y": 1,
+          "options": {
+            "collection": "contacts",
+            "key": "{{$trigger.payload.contact}}"
+          }
+        },
+        {
+          "name": "Get Email Template",
+          "key": "get_template",
+          "type": "item-read",
+          "position_x": 37,
+          "position_y": 1,
+          "options": {
+            "collection": "email_templates",
+            "query": {
+              "filter": {
+                "slug": { "_eq": "welcome" }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get System Config",
+          "key": "get_config",
+          "type": "item-read",
+          "position_x": 55,
+          "position_y": 1,
+          "options": {
+            "collection": "system_config",
+            "key": 1
+          }
+        },
+        {
+          "name": "Send Email via Webhook",
+          "key": "send_email",
+          "type": "request",
+          "position_x": 37,
+          "position_y": 19,
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "to": "{{get_contact.email}}",
+              "subject": "{{get_template.subject}}",
+              "html": "{{get_template.body_html}}",
+              "variables": {
+                "contact_first_name": "{{get_contact.first_name}}",
+                "booking_url": "{{get_config.booking_url}}",
+                "logo_url": "{{get_config.logo_url}}",
+                "company_address": "{{get_config.company_address}}"
+              }
+            }
+          }
+        },
+        {
+          "name": "Log Communication",
+          "key": "log_comm",
+          "type": "item-create",
+          "position_x": 37,
+          "position_y": 37,
+          "options": {
+            "collection": "communication_log",
+            "payload": {
+              "client": "{{$trigger.payload.company}}",
+              "contact": "{{$trigger.payload.contact}}",
+              "communication_type": "email",
+              "direction": "outbound",
+              "subject": "Welcome Email Sent",
+              "summary": "Automated welcome email sent to new lead",
+              "timestamp": "{{$now}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pre-Meeting Reminder",
+      "icon": "schedule",
+      "color": "#b91c1c",
+      "description": "Sends reminder 24h before scheduled meeting",
+      "status": "active",
+      "trigger": "schedule",
+      "options": {
+        "cron": "0 9 * * *"
+      },
+      "operations": [
+        {
+          "name": "Find Tomorrow's Meetings",
+          "key": "find_meetings",
+          "type": "item-read",
+          "options": {
+            "collection": "calendar_events",
+            "query": {
+              "filter": {
+                "_and": [
+                  { "event_type": { "_eq": "client_meeting" } },
+                  { "start_datetime": { "_gte": "$NOW(+23h)" } },
+                  { "start_datetime": { "_lte": "$NOW(+25h)" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name": "Loop Through Meetings",
+          "key": "loop",
+          "type": "exec",
+          "options": {
+            "code": "module.exports = async function(data) { return data.find_meetings; }"
+          }
+        },
+        {
+          "name": "Send Reminder Email",
+          "key": "send_reminder",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "template": "pre_meeting",
+              "to": "{{loop.$item.attendees_contacts[0].email}}",
+              "variables": {
+                "meeting_date": "{{loop.$item.start_datetime}}",
+                "video_call_url": "{{loop.$item.video_call_url}}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proposal Sent Notification",
+      "icon": "description",
+      "color": "#b91c1c",
+      "description": "Notifies client when proposal status changes to sent",
+      "status": "active",
+      "trigger": "event",
+      "options": {
+        "type": "action",
+        "scope": ["items.update"],
+        "collections": ["proposals"]
+      },
+      "operations": [
+        {
+          "name": "Check Status Change",
+          "key": "check_status",
+          "type": "condition",
+          "options": {
+            "filter": {
+              "_and": [
+                { "$trigger.payload.status": { "_eq": "sent" } }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Proposal Details",
+          "key": "get_proposal",
+          "type": "item-read",
+          "options": {
+            "collection": "proposals",
+            "key": "{{$trigger.key}}"
+          }
+        },
+        {
+          "name": "Get Contact",
+          "key": "get_contact",
+          "type": "item-read",
+          "options": {
+            "collection": "contacts",
+            "key": "{{get_proposal.contact}}"
+          }
+        },
+        {
+          "name": "Send Proposal Email",
+          "key": "send_email",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "template": "proposal",
+              "to": "{{get_contact.email}}",
+              "variables": {
+                "contact_first_name": "{{get_contact.first_name}}",
+                "project_name": "{{get_proposal.opportunity_name}}",
+                "total_value": "{{get_proposal.total_value}}",
+                "expiration_date": "{{get_proposal.expiration_date}}",
+                "proposal_url": "{{get_proposal.proposal_document}}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contract Active - Onboarding",
+      "icon": "handshake",
+      "color": "#b91c1c",
+      "description": "Sends onboarding email when contract becomes active",
+      "status": "active",
+      "trigger": "event",
+      "options": {
+        "type": "action",
+        "scope": ["items.update"],
+        "collections": ["contracts"]
+      },
+      "operations": [
+        {
+          "name": "Check Status Active",
+          "key": "check_status",
+          "type": "condition",
+          "options": {
+            "filter": {
+              "$trigger.payload.status": { "_eq": "active" }
+            }
+          }
+        },
+        {
+          "name": "Get Contract with Relations",
+          "key": "get_contract",
+          "type": "item-read",
+          "options": {
+            "collection": "contracts",
+            "key": "{{$trigger.key}}",
+            "query": {
+              "fields": ["*", "client.*", "project.*"]
+            }
+          }
+        },
+        {
+          "name": "Get Primary Contact",
+          "key": "get_contact",
+          "type": "item-read",
+          "options": {
+            "collection": "contacts",
+            "query": {
+              "filter": {
+                "_and": [
+                  { "client": { "_eq": "{{get_contract.client.id}}" } },
+                  { "is_primary_contact": { "_eq": true } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name": "Send Onboarding Email",
+          "key": "send_email",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "template": "onboarding",
+              "to": "{{get_contact[0].email}}",
+              "variables": {
+                "contact_first_name": "{{get_contact[0].first_name}}",
+                "company_name": "{{get_contract.client.company_name}}",
+                "project_manager": "{{get_contract.project.project_manager}}",
+                "project_email": "{{get_contract.project.project_email}}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Milestone Completed",
+      "icon": "flag",
+      "color": "#b91c1c",
+      "description": "Notifies client when milestone is completed",
+      "status": "active",
+      "trigger": "event",
+      "options": {
+        "type": "action",
+        "scope": ["items.update"],
+        "collections": ["milestones"]
+      },
+      "operations": [
+        {
+          "name": "Check Completed",
+          "key": "check_status",
+          "type": "condition",
+          "options": {
+            "filter": {
+              "$trigger.payload.status": { "_eq": "completed" }
+            }
+          }
+        },
+        {
+          "name": "Get Milestone with Project",
+          "key": "get_milestone",
+          "type": "item-read",
+          "options": {
+            "collection": "milestones",
+            "key": "{{$trigger.key}}",
+            "query": {
+              "fields": ["*", "project.*", "project.client.*"]
+            }
+          }
+        },
+        {
+          "name": "Send Milestone Email",
+          "key": "send_email",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "template": "milestone",
+              "variables": {
+                "milestone_name": "{{get_milestone.name}}",
+                "project_name": "{{get_milestone.project.name}}",
+                "completion_percentage": "{{get_milestone.project.completion_percentage}}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoice Sent",
+      "icon": "receipt",
+      "color": "#b91c1c",
+      "description": "Sends invoice notification when status changes to sent",
+      "status": "active",
+      "trigger": "event",
+      "options": {
+        "type": "action",
+        "scope": ["items.update"],
+        "collections": ["invoices"]
+      },
+      "operations": [
+        {
+          "name": "Check Sent Status",
+          "key": "check_status",
+          "type": "condition",
+          "options": {
+            "filter": {
+              "$trigger.payload.status": { "_eq": "sent" }
+            }
+          }
+        },
+        {
+          "name": "Get Invoice Details",
+          "key": "get_invoice",
+          "type": "item-read",
+          "options": {
+            "collection": "invoices",
+            "key": "{{$trigger.key}}",
+            "query": {
+              "fields": ["*", "client.*", "project.*"]
+            }
+          }
+        },
+        {
+          "name": "Send Invoice Email",
+          "key": "send_email",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "template": "invoice",
+              "variables": {
+                "invoice_number": "{{get_invoice.invoice_number}}",
+                "total_amount": "{{get_invoice.total_amount}}",
+                "due_date": "{{get_invoice.due_date}}",
+                "project_name": "{{get_invoice.project.name}}",
+                "stripe_payment_url": "{{get_invoice.stripe_invoice_id}}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment Reminder - Overdue",
+      "icon": "warning",
+      "color": "#dc2626",
+      "description": "Daily check for overdue invoices and send reminders",
+      "status": "active",
+      "trigger": "schedule",
+      "options": {
+        "cron": "0 10 * * *"
+      },
+      "operations": [
+        {
+          "name": "Find Overdue Invoices",
+          "key": "find_overdue",
+          "type": "item-read",
+          "options": {
+            "collection": "invoices",
+            "query": {
+              "filter": {
+                "_and": [
+                  { "status": { "_neq": "paid" } },
+                  { "status": { "_neq": "cancelled" } },
+                  { "due_date": { "_lt": "$NOW" } }
+                ]
+              },
+              "fields": ["*", "client.*"]
+            }
+          }
+        },
+        {
+          "name": "Send Reminders",
+          "key": "send_reminders",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}/batch",
+            "body": {
+              "template": "payment_reminder",
+              "invoices": "{{find_overdue}}"
+            }
+          }
+        },
+        {
+          "name": "Update Status to Overdue",
+          "key": "update_status",
+          "type": "item-update",
+          "options": {
+            "collection": "invoices",
+            "query": {
+              "filter": {
+                "_and": [
+                  { "status": { "_eq": "sent" } },
+                  { "due_date": { "_lt": "$NOW" } }
+                ]
+              }
+            },
+            "payload": {
+              "status": "overdue"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Project Completed",
+      "icon": "check_circle",
+      "color": "#22c55e",
+      "description": "Sends completion email when project is marked complete",
+      "status": "active",
+      "trigger": "event",
+      "options": {
+        "type": "action",
+        "scope": ["items.update"],
+        "collections": ["projects"]
+      },
+      "operations": [
+        {
+          "name": "Check Completed",
+          "key": "check_status",
+          "type": "condition",
+          "options": {
+            "filter": {
+              "$trigger.payload.status": { "_eq": "completed" }
+            }
+          }
+        },
+        {
+          "name": "Get Project",
+          "key": "get_project",
+          "type": "item-read",
+          "options": {
+            "collection": "projects",
+            "key": "{{$trigger.key}}",
+            "query": {
+              "fields": ["*", "client.*"]
+            }
+          }
+        },
+        {
+          "name": "Send Completion Email",
+          "key": "send_email",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}",
+            "body": {
+              "template": "completion",
+              "variables": {
+                "project_name": "{{get_project.name}}",
+                "live_url": "{{get_project.live_url}}",
+                "admin_url": "{{get_project.admin_url}}"
+              }
+            }
+          }
+        },
+        {
+          "name": "Schedule Completion Pack",
+          "key": "schedule_pack",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}/schedule",
+            "body": {
+              "template": "completion_pack",
+              "project_id": "{{$trigger.key}}",
+              "delay_hours": 72
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lead Re-engagement",
+      "icon": "refresh",
+      "color": "#f59e0b",
+      "description": "Daily check for inactive leads (14+ days) and send re-engagement",
+      "status": "active",
+      "trigger": "schedule",
+      "options": {
+        "cron": "0 11 * * *"
+      },
+      "operations": [
+        {
+          "name": "Find Inactive Leads",
+          "key": "find_inactive",
+          "type": "item-read",
+          "options": {
+            "collection": "leads",
+            "query": {
+              "filter": {
+                "_and": [
+                  { "lead_status": { "_nin": ["won", "lost"] } },
+                  { "last_activity_date": { "_lt": "$NOW(-14d)" } }
+                ]
+              },
+              "fields": ["*", "contact.*"]
+            }
+          }
+        },
+        {
+          "name": "Send Re-engagement Emails",
+          "key": "send_emails",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}/batch",
+            "body": {
+              "template": "re_engagement",
+              "leads": "{{find_inactive}}"
+            }
+          }
+        },
+        {
+          "name": "Update Activity Date",
+          "key": "update_activity",
+          "type": "item-update",
+          "options": {
+            "collection": "leads",
+            "query": {
+              "filter": {
+                "id": { "_in": "{{find_inactive.*.id}}" }
+              }
+            },
+            "payload": {
+              "last_activity_date": "$NOW"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nurture Sequence",
+      "icon": "local_florist",
+      "color": "#8b5cf6",
+      "description": "Monthly nurture emails to past clients",
+      "status": "active",
+      "trigger": "schedule",
+      "options": {
+        "cron": "0 10 1 * *"
+      },
+      "operations": [
+        {
+          "name": "Find Past Clients",
+          "key": "find_clients",
+          "type": "item-read",
+          "options": {
+            "collection": "clients",
+            "query": {
+              "filter": {
+                "status": { "_eq": "past" }
+              },
+              "fields": ["*"]
+            }
+          }
+        },
+        {
+          "name": "Get This Month's Nurture Content",
+          "key": "get_content",
+          "type": "request",
+          "options": {
+            "method": "GET",
+            "url": "{{$env.NURTURE_CONTENT_URL}}"
+          }
+        },
+        {
+          "name": "Send Nurture Emails",
+          "key": "send_nurture",
+          "type": "request",
+          "options": {
+            "method": "POST",
+            "url": "{{$env.EMAIL_WEBHOOK_URL}}/batch",
+            "body": {
+              "template": "nurture",
+              "clients": "{{find_clients}}",
+              "content": "{{get_content}}"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "environment_variables": {
+    "EMAIL_WEBHOOK_URL": "http://shinobi_email:5001/webhook"
+  },
+  "agent_flows": [
+    {
+      "name": "AI Agent - Inbound Email",
+      "icon": "smart_toy",
+      "color": "#6366F1",
+      "description": "Triggers AI email agent when inbound email is received",
+      "status": "active",
+      "trigger": "event",
+      "accountability": "all",
+      "options": {
+        "type": "action",
+        "scope": ["items.create"],
+        "collections": ["emails"]
+      },
+      "operations": [
+        {
+          "name": "Check Inbound",
+          "key": "check_inbound",
+          "type": "condition",
+          "position_x": 19,
+          "position_y": 1,
+          "options": {
+            "filter": {
+              "$trigger": {
+                "payload": {
+                  "direction": { "_eq": "inbound" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Trigger Agent",
+          "key": "trigger_agent",
+          "type": "request",
+          "position_x": 37,
+          "position_y": 1,
+          "options": {
+            "method": "POST",
+            "url": "{{$env.AGENT_SERVICE_URL}}/webhook",
+            "headers": [
+              { "header": "Content-Type", "value": "application/json" }
+            ],
+            "body": "{\"event\": \"{{$trigger.event}}\", \"collection\": \"{{$trigger.collection}}\", \"key\": \"{{$trigger.key}}\", \"payload\": {{$trigger.payload}}}"
+          }
+        },
+        {
+          "name": "Log Agent Trigger",
+          "key": "log_trigger",
+          "type": "item-create",
+          "position_x": 55,
+          "position_y": 1,
+          "options": {
+            "collection": "agent_logs",
+            "payload": {
+              "agent_type": "email_agent",
+              "trigger_source": "directus_flow",
+              "status": "pending",
+              "input_data": "{{$trigger.payload}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Agent - New Lead",
+      "icon": "smart_toy",
+      "color": "#6366F1",
+      "description": "Triggers AI lead agent when new lead is created",
+      "status": "active",
+      "trigger": "event",
+      "accountability": "all",
+      "options": {
+        "type": "action",
+        "scope": ["items.create"],
+        "collections": ["leads"]
+      },
+      "operations": [
+        {
+          "name": "Trigger Agent",
+          "key": "trigger_agent",
+          "type": "request",
+          "position_x": 19,
+          "position_y": 1,
+          "options": {
+            "method": "POST",
+            "url": "{{$env.AGENT_SERVICE_URL}}/webhook",
+            "headers": [
+              { "header": "Content-Type", "value": "application/json" }
+            ],
+            "body": "{\"event\": \"{{$trigger.event}}\", \"collection\": \"{{$trigger.collection}}\", \"key\": \"{{$trigger.key}}\", \"payload\": {{$trigger.payload}}}"
+          }
+        },
+        {
+          "name": "Log Agent Trigger",
+          "key": "log_trigger",
+          "type": "item-create",
+          "position_x": 37,
+          "position_y": 1,
+          "options": {
+            "collection": "agent_logs",
+            "payload": {
+              "agent_type": "lead_agent",
+              "trigger_source": "directus_flow",
+              "status": "pending",
+              "input_data": "{{$trigger.payload}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Agent - Approval Response",
+      "icon": "check_circle",
+      "color": "#22C55E",
+      "description": "Processes human approval responses and takes action",
+      "status": "active",
+      "trigger": "event",
+      "accountability": "all",
+      "options": {
+        "type": "action",
+        "scope": ["items.update"],
+        "collections": ["human_prompts"]
+      },
+      "operations": [
+        {
+          "name": "Check Responded",
+          "key": "check_responded",
+          "type": "condition",
+          "position_x": 19,
+          "position_y": 1,
+          "options": {
+            "filter": {
+              "$trigger": {
+                "payload": {
+                  "status": { "_eq": "responded" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Trigger Approval Handler",
+          "key": "trigger_handler",
+          "type": "request",
+          "position_x": 37,
+          "position_y": 1,
+          "options": {
+            "method": "POST",
+            "url": "{{$env.AGENT_SERVICE_URL}}/approval",
+            "headers": [
+              { "header": "Content-Type", "value": "application/json" }
+            ],
+            "body": "{\"prompt_id\": \"{{$trigger.key}}\", \"response\": \"{{$trigger.payload.response}}\", \"context\": {{$trigger.payload.context}}}"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "setup": "These flows need to be configured manually in Directus Admin UI: Settings > Flows",
+    "email_service": "Emails sent via SendGrid through the shinobi_email container",
+    "agent_service": "AI agents receive webhooks on AGENT_SERVICE_URL (default: http://localhost:5001)",
+    "webhook_endpoints": {
+      "welcome": "POST /webhook/lead/welcome",
+      "pre_meeting": "POST /webhook/meeting/reminder",
+      "proposal": "POST /webhook/proposal/sent",
+      "onboarding": "POST /webhook/contract/active",
+      "milestone": "POST /webhook/milestone/completed",
+      "invoice": "POST /webhook/invoice/sent",
+      "overdue": "POST /webhook/invoice/overdue",
+      "completion": "POST /webhook/project/completed",
+      "reengagement": "POST /webhook/lead/reengagement"
+    }
+  }
+}

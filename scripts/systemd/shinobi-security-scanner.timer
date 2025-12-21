@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Shinobi Security Scanner weekly
+Documentation=https://github.com/JoninShinobi/the-shinobi-project
+
+[Timer]
+# Run every Sunday at 02:00 UTC
+OnCalendar=Sun *-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=3600
+
+[Install]
+WantedBy=timers.target

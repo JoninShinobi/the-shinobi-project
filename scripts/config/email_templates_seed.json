@@ -1,0 +1,222 @@
+{
+  "email_templates": [
+    {
+      "name": "Welcome Email",
+      "slug": "welcome",
+      "category": "welcome",
+      "subject": "Welcome to The Shinobi Project",
+      "trigger_collection": "leads",
+      "trigger_field": "status",
+      "trigger_value": "new",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "company_name": "clients.company_name",
+        "booking_url": "system.booking_url",
+        "logo_url": "system.logo_url"
+      }
+    },
+    {
+      "name": "Pre-Meeting Reminder",
+      "slug": "pre_meeting",
+      "category": "booking",
+      "subject": "Your Discovery Call Tomorrow - Quick Prep",
+      "trigger_collection": "calendar_events",
+      "trigger_field": "event_type",
+      "trigger_value": "client_meeting",
+      "delay_hours": -24,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "meeting_date": "calendar_events.start_datetime",
+        "meeting_time": "calendar_events.start_datetime",
+        "video_call_url": "calendar_events.video_call_url",
+        "reschedule_url": "system.reschedule_url"
+      }
+    },
+    {
+      "name": "Post-Meeting Follow-Up",
+      "slug": "follow_up",
+      "category": "follow_up",
+      "subject": "Following Up - {{company_name}}",
+      "trigger_collection": "communication_log",
+      "trigger_field": "communication_type",
+      "trigger_value": "meeting",
+      "delay_hours": 1,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "company_name": "clients.company_name",
+        "meeting_summary": "communication_log.summary",
+        "next_steps": "communication_log.action_items",
+        "custom_message": "manual_input",
+        "assigned_team_member": "team_members.first_name"
+      }
+    },
+    {
+      "name": "Re-Engagement Email",
+      "slug": "re_engagement",
+      "category": "re_engagement",
+      "subject": "Still Interested in Moving Forward?",
+      "trigger_collection": "leads",
+      "trigger_field": "last_activity_date",
+      "trigger_value": ">14_days_ago",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "booking_url": "system.booking_url"
+      }
+    },
+    {
+      "name": "Proposal Sent",
+      "slug": "proposal",
+      "category": "proposal",
+      "subject": "Your Proposal is Ready - {{project_name}}",
+      "trigger_collection": "proposals",
+      "trigger_field": "status",
+      "trigger_value": "sent",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "company_name": "clients.company_name",
+        "project_name": "proposals.opportunity_name",
+        "total_value": "proposals.total_value",
+        "expiration_date": "proposals.expiration_date",
+        "proposal_url": "proposals.proposal_document"
+      }
+    },
+    {
+      "name": "Contract & Onboarding",
+      "slug": "onboarding",
+      "category": "onboarding",
+      "subject": "Welcome Aboard - Let's Begin",
+      "trigger_collection": "contracts",
+      "trigger_field": "status",
+      "trigger_value": "active",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "company_name": "clients.company_name",
+        "project_manager": "projects.project_manager",
+        "project_email": "projects.project_email",
+        "kickoff_booking_url": "system.kickoff_booking_url"
+      }
+    },
+    {
+      "name": "Milestone Update",
+      "slug": "milestone",
+      "category": "milestone",
+      "subject": "Milestone Complete - {{milestone_name}}",
+      "trigger_collection": "milestones",
+      "trigger_field": "status",
+      "trigger_value": "completed",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "project_name": "projects.name",
+        "milestone_name": "milestones.name",
+        "milestone_description": "milestones.description",
+        "completion_percentage": "projects.completion_percentage",
+        "next_milestone_name": "milestones.next.name"
+      }
+    },
+    {
+      "name": "Invoice Sent",
+      "slug": "invoice",
+      "category": "invoice",
+      "subject": "Invoice {{invoice_number}} - {{company_name}}",
+      "trigger_collection": "invoices",
+      "trigger_field": "status",
+      "trigger_value": "sent",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "company_name": "clients.company_name",
+        "invoice_number": "invoices.invoice_number",
+        "total_amount": "invoices.total_amount",
+        "due_date": "invoices.due_date",
+        "project_name": "projects.name",
+        "stripe_payment_url": "invoices.stripe_invoice_id"
+      }
+    },
+    {
+      "name": "Payment Reminder",
+      "slug": "payment_reminder",
+      "category": "payment_reminder",
+      "subject": "Payment Reminder - Invoice {{invoice_number}}",
+      "trigger_collection": "invoices",
+      "trigger_field": "status",
+      "trigger_value": "overdue",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "invoice_number": "invoices.invoice_number",
+        "amount_remaining": "invoices.amount_remaining",
+        "days_overdue": "calculated",
+        "stripe_payment_url": "invoices.stripe_invoice_id"
+      }
+    },
+    {
+      "name": "Project Completion",
+      "slug": "completion",
+      "category": "completion",
+      "subject": "Project Complete - {{project_name}}",
+      "trigger_collection": "projects",
+      "trigger_field": "status",
+      "trigger_value": "completed",
+      "delay_hours": 0,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "project_name": "projects.name",
+        "deliverables_summary": "projects.requirements",
+        "live_url": "projects.live_url",
+        "admin_url": "projects.admin_url",
+        "docs_url": "documents.handover",
+        "feedback_url": "system.feedback_url"
+      }
+    },
+    {
+      "name": "Completion Pack",
+      "slug": "completion_pack",
+      "category": "referral",
+      "subject": "Your Completion Pack - Share the Success",
+      "trigger_collection": "projects",
+      "trigger_field": "status",
+      "trigger_value": "completed",
+      "delay_hours": 72,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "company_name": "clients.company_name",
+        "completion_pack_url": "documents.completion_pack"
+      }
+    },
+    {
+      "name": "Nurture Sequence",
+      "slug": "nurture",
+      "category": "nurture",
+      "subject": "{{nurture_subject}}",
+      "trigger_collection": "clients",
+      "trigger_field": "status",
+      "trigger_value": "past",
+      "delay_hours": 720,
+      "is_active": true,
+      "variables": {
+        "contact_first_name": "contacts.first_name",
+        "nurture_subject": "template_rotation",
+        "nurture_headline": "template_rotation",
+        "nurture_body": "template_rotation",
+        "featured_title": "optional",
+        "featured_description": "optional"
+      }
+    }
+  ]
+}

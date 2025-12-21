@@ -3,3 +3,20 @@ google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 google-api-python-client>=2.0.0
 requests>=2.28.0
+
+# Email Service Dependencies (SendGrid)
+sendgrid>=6.10.0
+flask>=3.0.0
+gunicorn>=21.0.0
+
+# Agent Service Dependencies
+fastapi>=0.109.0
+uvicorn>=0.27.0
+httpx>=0.26.0
+pydantic>=2.5.0
+
+# Claude SDK (AI Agent Core)
+anthropic>=0.40.0
+
+# Redis for agent state management
+redis>=5.0.0

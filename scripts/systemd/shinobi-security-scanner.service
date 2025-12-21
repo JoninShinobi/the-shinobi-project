@@ -1,0 +1,23 @@
+[Unit]
+Description=Shinobi Security Scanner
+Documentation=https://github.com/JoninShinobi/the-shinobi-project
+After=network.target
+
+[Service]
+Type=oneshot
+User=shinobi
+Group=shinobi
+WorkingDirectory=/opt/shinobi-project
+ExecStart=/opt/shinobi-project/scripts/run_security_scan.sh
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+EnvironmentFile=/opt/shinobi-project/.env
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
