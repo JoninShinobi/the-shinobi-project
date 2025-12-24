@@ -26,6 +26,9 @@ media/
 # MCP Config (contains tokens)
 .mcp.json
 
+# Claude project instructions (contains secrets)
+CLAUDE.md
+
 # Node/Frontend
 node_modules/
 .next/
