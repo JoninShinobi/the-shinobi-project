@@ -770,7 +770,7 @@ async def lifespan(app: FastAPI):
     _finance_agent = FinanceAgent(config=agent_config)
     _marketing_agent = MarketingAgent(config=agent_config)
     _client_services_agent = ClientServicesAgent(config=agent_config)
-    _email_agent = EmailAgent(config=agent_config)
+    _email_agent = EmailAgent()
 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Initialized 5 SDK-based agents:")
     print(f"  - OrchestratorAgent (central routing)")
