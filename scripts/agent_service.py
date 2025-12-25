@@ -45,7 +45,8 @@ from agents import (
 )
 
 # Import Gmail helper for direct email sending
-from email.gmail_helper import send_email as gmail_send_email
+# TODO: Restore email functionality after restructuring
+# from email.gmail_helper import send_email as gmail_send_email
 
 # Configuration
 DIRECTUS_URL = os.getenv("DIRECTUS_URL", "http://localhost:8055")
