@@ -45,7 +45,7 @@ from agents import (
 )
 
 # Import Twilio webhook router
-from twilio import whatsapp_router
+from twilio_integration import whatsapp_router
 
 # Import Gmail helper for direct email sending
 # TODO: Restore email functionality after restructuring

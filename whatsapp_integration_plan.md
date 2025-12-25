@@ -116,9 +116,9 @@ AGENT_ROUTES = {
 ### 2.2 Twilio Webhook Handler Created ✅
 
 **Created Files:**
-- `scripts/twilio/__init__.py` - Module exports
-- `scripts/twilio/whatsapp_webhook.py` - Main webhook handler
-- `scripts/twilio/README.md` - Complete documentation
+- `scripts/twilio_integration/__init__.py` - Module exports
+- `scripts/twilio_integration/whatsapp_webhook.py` - Main webhook handler
+- `scripts/twilio_integration/README.md` - Complete documentation
 
 **Webhook Endpoints:**
 
@@ -148,7 +148,7 @@ Health check endpoint for monitoring.
 
 **Dependencies Added:**
 - `scripts/requirements.txt` - Added `twilio>=9.0.0`
-- `agents/Dockerfile` - Updated to copy `scripts/twilio/` directory
+- `agents/Dockerfile` - Updated to copy `scripts/twilio_integration/` directory
 
 **Commit:** `b959141` - "Add Twilio WhatsApp webhook handler"
 
@@ -496,6 +496,13 @@ AGENT_PORT=8080
 - Documented all 6 flows in detail
 - Ready to implement flows in Directus UI
 
+**13:00 - Namespace Shadowing Fix**
+- Renamed `scripts/twilio/` to `scripts/twilio_integration/` to avoid shadowing the installed `twilio` SDK package
+- Updated import in `agent_service.py`: `from twilio import` → `from twilio_integration import`
+- Updated Dockerfile copy instruction
+- Updated all documentation references
+- Fixed deployment blocker: `ModuleNotFoundError: No module named 'twilio.request_validator'`
+
 ---
 
 ## 🎯 Next Actions
@@ -519,8 +526,8 @@ AGENT_PORT=8080
 ### Critical Files
 - [scripts/agents/comms_agent.py](scripts/agents/comms_agent.py) - Unified communications agent
 - [scripts/agent_service.py](scripts/agent_service.py) - FastAPI service with routing
-- [scripts/twilio/whatsapp_webhook.py](scripts/twilio/whatsapp_webhook.py) - Webhook handler
-- [scripts/twilio/README.md](scripts/twilio/README.md) - Complete webhook documentation
+- [scripts/twilio_integration/whatsapp_webhook.py](scripts/twilio_integration/whatsapp_webhook.py) - Webhook handler
+- [scripts/twilio_integration/README.md](scripts/twilio_integration/README.md) - Complete webhook documentation
 - [agents/Dockerfile](agents/Dockerfile) - Production Docker build
 - [scripts/requirements.txt](scripts/requirements.txt) - Python dependencies
 
