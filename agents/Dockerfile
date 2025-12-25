@@ -3,14 +3,14 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy requirements from scripts directory
-COPY ../scripts/requirements.txt .
+COPY scripts/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy agent service and agents from scripts directory
-COPY ../scripts/agent_service.py .
-COPY ../scripts/agents/ ./agents/
+COPY scripts/agent_service.py
+COPY scripts/agents/ ./agents/
 
 # Render expects port 8080
 ENV PORT=8080
