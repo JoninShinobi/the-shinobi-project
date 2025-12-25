@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight, Shield, Zap, Code, Database, Globe, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useContactModal } from '@/components/ContactModalProvider';
 
 // --- Components ---
 
@@ -70,6 +71,7 @@ const Button = ({ children, primary = false, className = "" }: {
 export default function ShinobiProject() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { openModal } = useContactModal();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -94,7 +96,7 @@ export default function ShinobiProject() {
             <a href="#services" className="text-xs font-medium hover:text-red-500 transition-colors uppercase tracking-widest">Arsenal</a>
             <a href="#philosophy" className="text-xs font-medium hover:text-red-500 transition-colors uppercase tracking-widest">Protocol</a>
             <Link href="/portfolio" className="text-xs font-medium hover:text-red-500 transition-colors uppercase tracking-widest">Deployments</Link>
-            <button className="px-5 py-2 border border-red-700 text-red-500 hover:bg-red-700 hover:text-white transition-all duration-300 text-xs font-bold uppercase tracking-widest">
+            <button onClick={openModal} className="px-5 py-2 border border-red-700 text-red-500 hover:bg-red-700 hover:text-white transition-all duration-300 text-xs font-bold uppercase tracking-widest">
               Initiate
             </button>
           </div>
@@ -112,7 +114,7 @@ export default function ShinobiProject() {
           <a href="#services" className="text-2xl font-bold text-white uppercase tracking-widest" onClick={() => setMobileMenuOpen(false)}>Arsenal</a>
           <a href="#philosophy" className="text-2xl font-bold text-white uppercase tracking-widest" onClick={() => setMobileMenuOpen(false)}>Protocol</a>
           <Link href="/portfolio" className="text-2xl font-bold text-white uppercase tracking-widest" onClick={() => setMobileMenuOpen(false)}>Deployments</Link>
-          <button className="px-8 py-3 bg-red-700 text-white font-bold uppercase" onClick={() => setMobileMenuOpen(false)}>Initiate Protocol</button>
+          <button className="px-8 py-3 bg-red-700 text-white font-bold uppercase" onClick={() => { setMobileMenuOpen(false); openModal(); }}>Initiate Protocol</button>
         </div>
       )}
 

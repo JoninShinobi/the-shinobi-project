@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ExternalLink, X, Layers, Shield, Target } from 'lucide-react';
 import Link from 'next/link';
+import { useContactModal } from '@/components/ContactModalProvider';
 
 const Logo = ({ className = "h-10 w-10" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -248,6 +249,7 @@ const DeploymentModal = ({ deployment, onClose }: { deployment: typeof deploymen
 export default function PortfolioPage() {
   const [selectedDeployment, setSelectedDeployment] = useState<typeof deployments[0] | null>(null);
   const [filter, setFilter] = useState<string>('all');
+  const { openModal } = useContactModal();
 
   const sectors = ['all', ...new Set(deployments.map(d => d.sector))];
   const filteredDeployments = filter === 'all' ? deployments : deployments.filter(d => d.sector === filter);
@@ -267,7 +269,7 @@ export default function PortfolioPage() {
             <Link href="/#mission" className="text-xs font-medium hover:text-red-500 transition-colors uppercase tracking-widest">Mission</Link>
             <Link href="/#services" className="text-xs font-medium hover:text-red-500 transition-colors uppercase tracking-widest">Arsenal</Link>
             <Link href="/portfolio" className="text-xs font-medium text-red-500 uppercase tracking-widest">Deployments</Link>
-            <button className="px-5 py-2 border border-red-700 text-red-500 hover:bg-red-700 hover:text-white transition-all duration-300 text-xs font-bold uppercase tracking-widest">
+            <button onClick={openModal} className="px-5 py-2 border border-red-700 text-red-500 hover:bg-red-700 hover:text-white transition-all duration-300 text-xs font-bold uppercase tracking-widest">
               Initiate
             </button>
           </div>
@@ -376,11 +378,9 @@ export default function PortfolioPage() {
           <p className="text-zinc-400 mb-8 max-w-lg mx-auto leading-relaxed">
             Your territory awaits fortification. Initiate contact and we will assess your operational requirements.
           </p>
-          <Link href="/#contact">
-            <button className="px-8 py-4 bg-red-700 text-white font-bold uppercase tracking-widest text-sm hover:bg-red-800 transition-colors">
-              Initiate Protocol
-            </button>
-          </Link>
+          <button onClick={openModal} className="px-8 py-4 bg-red-700 text-white font-bold uppercase tracking-widest text-sm hover:bg-red-800 transition-colors">
+            Initiate Protocol
+          </button>
         </div>
       </section>
 
