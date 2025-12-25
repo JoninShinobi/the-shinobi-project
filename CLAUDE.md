@@ -28,9 +28,33 @@ Web design/development agency management system built on:
 - **Docker** - Container orchestration
 
 ## Infrastructure
+
+### Local (Docker)
 - `shinobi_vault` - PostgreSQL 16 on port 5433
 - `shinobi_c2` - Directus on port 8055
 - `shinobi_face` - Django on port 8000
+
+### Production (Render)
+- **shinobi-directus** (srv-d567lsshg0os73ahd4d0)
+  - URL: https://shinobi-directus.onrender.com
+  - Branch: `main`
+  - Root Directory: `directus`
+  - Dockerfile: `directus/Dockerfile`
+  - Connects to: shinobi-vault PostgreSQL database
+
+- **shinobi-agents** (srv-d568d23e5dus73ckgmsg)
+  - URL: https://shinobi-agents.onrender.com
+  - Branch: `main`
+  - Root Directory: `agents`
+  - Dockerfile: `agents/Dockerfile`
+  - Contains: FastAPI + Claude Agent SDK (7 agents)
+
+- **shinobi-vault** (PostgreSQL)
+  - Host: dpg-d567ktshg0os73ahd280
+  - Database: shinobi_vault
+  - External access: Blocked (Render internal only)
+
+**IMPORTANT:** Both services watch `main` branch but use different root directories. This allows independent Dockerfiles while keeping everything in one repository. To update a specific service, modify files in its directory and push to main.
 
 ## MCP Connections
 - **Directus MCP** - Connected via `.mcp.json` (local project)
