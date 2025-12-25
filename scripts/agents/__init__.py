@@ -4,7 +4,7 @@ Specialized AI agents for business automation powered by Claude SDK.
 """
 
 from .base_agent import BaseAgent, AgentConfig, AgentResult
-from .email_agent import EmailAgent
+from .comms_agent import CommsAgent
 from .orchestrator_agent import OrchestratorAgent, Department, TaskClassification
 from .marketing_agent import MarketingAgent
 from .finance_agent import FinanceAgent
@@ -20,7 +20,7 @@ __all__ = [
     "Department",
     "TaskClassification",
     # Specialized Agents
-    "EmailAgent",
+    "CommsAgent",
     "MarketingAgent",
     "FinanceAgent",
     "ClientServicesAgent",

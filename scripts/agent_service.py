@@ -41,7 +41,7 @@ from agents import (
     MarketingAgent,
     FinanceAgent,
     ClientServicesAgent,
-    EmailAgent
+    CommsAgent
 )
 
 # Import Gmail helper for direct email sending
@@ -61,7 +61,7 @@ _orchestrator: Optional[OrchestratorAgent] = None
 _finance_agent: Optional[FinanceAgent] = None
 _marketing_agent: Optional[MarketingAgent] = None
 _client_services_agent: Optional[ClientServicesAgent] = None
-_email_agent: Optional[EmailAgent] = None
+_comms_agent: Optional[CommsAgent] = None
 
 # ==========================================
 # Agent Status Controls (Enable/Disable)
@@ -70,7 +70,7 @@ _email_agent: Optional[EmailAgent] = None
 # Disabled agents will reject tasks with a clear message
 _agent_status: dict[str, bool] = {
     "orchestrator": True,
-    "email": True,
+    "comms": True,
     "lead": True,
     "tracker": True,
     "finance": True,
@@ -179,14 +179,14 @@ CACHE_TTL_SECONDS = 300  # 5 minutes
 
 # Fallback prompts (used if Directus fetch fails)
 FALLBACK_PROMPTS = {
-    "email": """You are the Shinobi Email Agent. Your job is to:
-1. Analyze the inbound email context provided
-2. Draft an appropriate professional response
-3. Store the draft in the service_workflows collection with status 'pending_approval'
-4. NEVER send emails directly - always create drafts for human approval
+    "comms": """You are the Shinobi Communications Agent. Your job is to:
+1. Analyze inbound communications (email, WhatsApp, SMS) context provided
+2. Draft appropriate professional responses based on the channel
+3. Store drafts in the service_workflows collection with status 'pending_approval'
+4. NEVER send messages directly - always create drafts for human approval
 
 Use the Directus MCP tools to read context and write drafts.
-Use Gmail MCP tools ONLY to read emails, never to send.
+Use communication MCP tools ONLY to read messages, never to send.
 """,
 
     "lead": """You are the Shinobi Lead Agent. Your job is to:
@@ -519,7 +519,7 @@ async def log_agent_activity(
 def get_agent_for_type(agent_type: str) -> Optional[BaseAgent]:
     """Get the appropriate SDK-based agent for a given type."""
     agent_map = {
-        "email": _email_agent,
+        "comms": _comms_agent,
         "lead": _marketing_agent,  # Marketing handles lead nurturing
         "tracker": _client_services_agent,  # Client services handles project tracking
         "finance": _finance_agent,
@@ -663,8 +663,8 @@ async def process_webhook(payload: WebhookPayload, background_tasks: BackgroundT
     # Determine which agent should handle this
     agent_type = None
 
-    if payload.collection == "emails":
-        agent_type = "email"
+    if payload.collection in ["emails", "whatsapp_messages", "sms_messages"]:
+        agent_type = "comms"
     elif payload.collection == "leads":
         agent_type = "lead"
     elif payload.collection in ["project_trackers", "tasks", "milestones"]:
@@ -748,7 +748,7 @@ async def run_agent_task(task: AgentTask):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
-    global _orchestrator, _finance_agent, _marketing_agent, _client_services_agent, _email_agent
+    global _orchestrator, _finance_agent, _marketing_agent, _client_services_agent, _comms_agent
 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Shinobi Agent Service starting on port {AGENT_PORT}")
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Directus URL: {DIRECTUS_URL}")
@@ -770,14 +770,14 @@ async def lifespan(app: FastAPI):
     _finance_agent = FinanceAgent(config=agent_config)
     _marketing_agent = MarketingAgent(config=agent_config)
     _client_services_agent = ClientServicesAgent(config=agent_config)
-    _email_agent = EmailAgent()
+    _comms_agent = CommsAgent()
 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Initialized 5 SDK-based agents:")
     print(f"  - OrchestratorAgent (central routing)")
     print(f"  - FinanceAgent (invoicing, payments)")
     print(f"  - MarketingAgent (campaigns, content)")
     print(f"  - ClientServicesAgent (support, relationships)")
-    print(f"  - EmailAgent (email drafting)")
+    print(f"  - CommsAgent (email, WhatsApp, SMS drafting)")
 
     # Preload prompts from Directus on startup
     prompts = await fetch_prompts_from_directus()
@@ -803,7 +803,7 @@ async def lifespan(app: FastAPI):
     _finance_agent = None
     _marketing_agent = None
     _client_services_agent = None
-    _email_agent = None
+    _comms_agent = None
 
 
 app = FastAPI(
