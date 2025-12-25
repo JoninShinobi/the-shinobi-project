@@ -18,5 +18,8 @@ pydantic>=2.5.0
 # Claude SDK (AI Agent Core)
 anthropic>=0.40.0
 
+# Twilio (WhatsApp Integration)
+twilio>=9.0.0
+
 # Redis for agent state management
 redis>=5.0.0

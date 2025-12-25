@@ -44,6 +44,9 @@ from agents import (
     CommsAgent
 )
 
+# Import Twilio webhook router
+from twilio import whatsapp_router
+
 # Import Gmail helper for direct email sending
 # TODO: Restore email functionality after restructuring
 # from email.gmail_helper import send_email as gmail_send_email
@@ -812,6 +815,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+# Include Twilio WhatsApp webhook router
+app.include_router(whatsapp_router, tags=["twilio"])
 
 
 @app.get("/health")
